@@ -114,11 +114,22 @@ export default function App() {
   const [timeLeft, setTimeLeft] = useState(10);
   const timerRef = useRef(null);
 
-  // Handle BGM on status change
+  // Handle BGM and Result SFX
   useEffect(() => {
     if (status === STATUS.PLAYING) {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
       startBgm();
-    } else if (status === STATUS.RESULT || status === STATUS.LOBBY) {
+    } else if (status === STATUS.RESULT) {
+      stopBgm();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      
+      const correctCount = answers.filter(a => a.isCorrect).length;
+      if (correctCount >= PASS_THRESHOLD) {
+        playSfx('victory');
+      } else {
+        playSfx('defeat');
+      }
+    } else if (status === STATUS.LOBBY) {
       stopBgm();
     }
   }, [status]);
@@ -219,15 +230,12 @@ export default function App() {
       
       setStatus(STATUS.RESULT);
       if (correctCount >= PASS_THRESHOLD) {
-        playSfx('victory');
         confetti({
           particleCount: 150,
           spread: 70,
           origin: { y: 0.6 },
           colors: ['#ff00ff', '#00ffff', '#ffff00']
         });
-      } else {
-        playSfx('defeat');
       }
     } catch (err) {
       console.error(err);
