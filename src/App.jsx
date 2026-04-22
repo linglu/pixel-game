@@ -51,6 +51,29 @@ const playSfx = (type) => {
     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
     osc.start();
     osc.stop(now + 0.3);
+  } else if (type === 'victory') {
+    // Triumphant Fanfare: C5, E5, G5, C6
+    [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'square';
+      o.connect(g);
+      g.connect(audioCtx.destination);
+      o.frequency.setValueAtTime(freq, now + i * 0.1);
+      g.gain.setValueAtTime(0.05, now + i * 0.1);
+      g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.2);
+      o.start(now + i * 0.1);
+      o.stop(now + i * 0.1 + 0.2);
+    });
+  } else if (type === 'defeat') {
+    // Sad descending slide
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(196, now); // G3
+    osc.frequency.exponentialRampToValueAtTime(49, now + 1); // G1
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.linearRampToValueAtTime(0, now + 1);
+    osc.start();
+    osc.stop(now + 1);
   }
 };
 
@@ -196,12 +219,15 @@ export default function App() {
       
       setStatus(STATUS.RESULT);
       if (correctCount >= PASS_THRESHOLD) {
+        playSfx('victory');
         confetti({
           particleCount: 150,
           spread: 70,
           origin: { y: 0.6 },
           colors: ['#ff00ff', '#00ffff', '#ffff00']
         });
+      } else {
+        playSfx('defeat');
       }
     } catch (err) {
       console.error(err);
