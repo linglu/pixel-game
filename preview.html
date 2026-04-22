@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Trivia Arcade - Preview</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --primary: #ff00ff;
+            --secondary: #00ffff;
+            --accent: #ffff00;
+            --bg: #1a1a1a;
+            --text: #ffffff;
+            --pixel-size: 4px;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            image-rendering: pixelated;
+        }
+
+        #root {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background-image: 
+                linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 3px 100%;
+        }
+
+        .arcade-panel {
+            background: #2a2a2a;
+            border: var(--pixel-size) solid #444;
+            box-shadow: 
+                inset calc(var(--pixel-size) * -1) calc(var(--pixel-size) * -1) 0 #000,
+                inset var(--pixel-size) var(--pixel-size) 0 #888,
+                0 0 20px rgba(0, 0, 0, 0.5);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            position: relative;
+        }
+
+        .pixel-btn {
+            display: inline-block;
+            padding: 15px 25px;
+            background: #555;
+            color: white;
+            border: var(--pixel-size) solid #000;
+            box-shadow: 
+                inset calc(var(--pixel-size) * -1) calc(var(--pixel-size) * -1) 0 #222,
+                inset var(--pixel-size) var(--pixel-size) 0 #aaa;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 14px;
+            transition: all 0.1s;
+            margin: 10px;
+        }
+
+        .pixel-btn:hover { background: #777; transform: translateY(-2px); }
+        .pixel-btn.primary { background: var(--primary); }
+        .pixel-btn.secondary { background: var(--secondary); color: #000; }
+
+        .pixel-input {
+            background: #000;
+            border: var(--pixel-size) solid #444;
+            padding: 15px;
+            color: var(--accent);
+            width: 100%;
+            margin-bottom: 20px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .blink { animation: blink 0.8s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        .boss-container {
+            width: 150px; height: 150px;
+            margin: 0 auto 20px;
+            background: #000;
+            border: 4px solid var(--primary);
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .boss-img { width: 100%; height: 100%; image-rendering: pixelated; }
+
+        .option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+        .text-center { text-align: center; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const STATUS = {
+            LOBBY: 'LOBBY',
+            LOADING: 'LOADING',
+            PLAYING: 'PLAYING',
+            RESULT: 'RESULT',
+        };
+
+        const BOSS_IMAGES = Array.from({ length: 10 }, (_, i) => 
+            `https://api.dicebear.com/7.x/pixel-art/svg?seed=${i}`
+        );
+
+        function App() {
+            const [status, setStatus] = useState(STATUS.LOBBY);
+            const [userId, setUserId] = useState('');
+            const [currentIndex, setCurrentIndex] = useState(0);
+            
+            const mockQuestions = [
+                { question: "1 + 1 = ?", options: { A: "1", B: "2", C: "3", D: "4" }, answer: "B" },
+                { question: "Pixel Art is...", options: { A: "Cool", B: "Bad", C: "Old", D: "Hard" }, answer: "A" }
+            ];
+
+            const startNewGame = () => {
+                if (!userId.trim()) return alert('INSERT ID!');
+                setStatus(STATUS.PLAYING);
+            };
+
+            const handleAnswer = (choice) => {
+                if (currentIndex + 1 < mockQuestions.length) {
+                    setCurrentIndex(currentIndex + 1);
+                } else {
+                    setStatus(STATUS.RESULT);
+                    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                }
+            };
+
+            if (status === STATUS.LOBBY) {
+                return (
+                    <div className="arcade-panel text-center">
+                        <h1 style={{fontSize: '20px'}}>PIXEL ARCADE</h1>
+                        <input 
+                            className="pixel-input" 
+                            placeholder="PLAYER ID" 
+                            id="player-id-input"
+                            value={userId}
+                            onChange={(e) => setUserId(e.target.value)}
+                        />
+                        <button className="pixel-btn primary" id="start-btn" onClick={startNewGame}>START</button>
+                    </div>
+                );
+            }
+
+            if (status === STATUS.PLAYING) {
+                const q = mockQuestions[currentIndex];
+                return (
+                    <div className="arcade-panel">
+                        <div className="boss-container">
+                            <img src={BOSS_IMAGES[currentIndex % 10]} className="boss-img" />
+                        </div>
+                        <h3 className="text-center">{q.question}</h3>
+                        <div className="option-grid">
+                            {Object.entries(q.options).map(([key, val]) => (
+                                <button key={key} className="pixel-btn secondary" onClick={() => handleAnswer(key)}>
+                                    {key}: {val}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                );
+            }
+
+            if (status === STATUS.RESULT) {
+                return (
+                    <div className="arcade-panel text-center">
+                        <h2 style={{color: '#0f0'}}>VICTORY!</h2>
+                        <button className="pixel-btn primary" onClick={() => window.location.reload()}>RESTART</button>
+                    </div>
+                );
+            }
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
