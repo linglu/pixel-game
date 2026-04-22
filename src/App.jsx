@@ -27,6 +27,10 @@ export default function App() {
   const [bossSeed, setBossSeed] = useState(0);
 
   const startNewGame = async () => {
+    if (!GAS_URL || GAS_URL.includes('YOUR_SCRIPT_ID')) {
+      alert('錯誤：找不到 Google Apps Script 網址。請檢查 .env 檔案或 GitHub Secrets 設定。');
+      return;
+    }
     if (!userId.trim()) return alert('PLEASE ENTER ID!');
     
     setStatus(STATUS.LOADING);

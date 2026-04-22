@@ -7,7 +7,6 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    # 賦予 Action 寫入權限，以便推送 gh-pages 分支
     permissions:
       contents: write
     steps:
@@ -26,10 +25,9 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          # 同時支援 Secrets 或 Variables 讀取
-          VITE_GOOGLE_APP_SCRIPT_URL: ${{ secrets.VITE_GOOGLE_APP_SCRIPT_URL || vars.VITE_GOOGLE_APP_SCRIPT_URL }}
-          VITE_PASS_THRESHOLD: ${{ secrets.VITE_PASS_THRESHOLD || vars.VITE_PASS_THRESHOLD }}
-          VITE_QUESTION_COUNT: ${{ secrets.VITE_QUESTION_COUNT || vars.VITE_QUESTION_COUNT }}
+          VITE_GOOGLE_APP_SCRIPT_URL: ${{ secrets.VITE_GOOGLE_APP_SCRIPT_URL }}
+          VITE_PASS_THRESHOLD: ${{ secrets.VITE_PASS_THRESHOLD }}
+          VITE_QUESTION_COUNT: ${{ secrets.VITE_QUESTION_COUNT }}
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
